@@ -75,9 +75,7 @@ namespace CreationModelPlugin
             int length = 30;
             int width = 18;
 
-            List<Wall> walls = new List<Wall>();
-
-            walls = WallCreate(doc, length, width);
+            List<Wall> walls = WallCreate(doc, length, width);
 
             return Result.Succeeded;
         }
