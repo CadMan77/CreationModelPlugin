@@ -100,15 +100,19 @@ namespace CreationModelPlugin
 
             Transaction ts = new Transaction(doc, "Walls Creation Transaction");
             ts.Start();
-            for (int i = 0; i < points.Count-1; i++)
-            {
-                Line line = Line.CreateBound(points[i], points[i+1]);
-                Wall wall = Wall.Create(doc, line, lev1.Id, false);
-                walls.Add(wall);
-                wall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(lev2.Id);
-            }
+            WallCreate(doc,points,lev1,lev2);
             ts.Commit();
             return Result.Succeeded;
         }
-    }
+        public void WallCreate (Document doc,List<XYZ> points, Level lev1, Level lev2)
+        {
+            for (int i = 0; i < points.Count - 1; i++)
+            {
+                Line line = Line.CreateBound(points[i], points[i + 1]);
+                Wall wall = Wall.Create(doc, line, lev1.Id, false);
+                //walls.Add(wall);
+                wall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(lev2.Id);
+            }
+        }
+    }    
 }
