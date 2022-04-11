@@ -69,25 +69,34 @@ namespace CreationModelPlugin
                 .WhereElementIsNotElementType() //??
                 .Where(x=>x.Name.Equals("36\" x 84\""))
                 .ToList(); // 11 (д.б.10??)
-            //TaskDialog.Show("res3 QTY:", $"{res3.Count}");
+                           //TaskDialog.Show("res3 QTY:", $"{res3.Count}");
             #endregion
 
+            int length = 30;
+            int width = 18;
+
+            List<Wall> walls = new List<Wall>();
+
+            walls = WallCreate(doc, length, width);
+
+            return Result.Succeeded;
+        }
+
+        public List<Wall> WallCreate(Document doc, int length, int width)
+        {
             var levels = new FilteredElementCollector(doc)
                 .OfClass(typeof(Level))
                 .OfType<Level>()
                 .ToList();
-                              
+
             Level lev1 = levels
-                .Where(x=>x.Name.Equals("Level 1")) // ?билингво? ~ ||"Уровень 1"
+                .Where(x => x.Name.Equals("Level 1")) // ?билингво? ~ ||"Уровень 1"
                 .FirstOrDefault();
-                //.First(); //?
+            //.First(); //?
 
             Level lev2 = levels
                 .Where(x => x.Name.Equals("Level 2"))
-                .FirstOrDefault();
-
-            int length = 30;
-            int width = 18;
+                .FirstOrDefault(); 
 
             List<XYZ> points = new List<XYZ>();
             points.Add(new XYZ(0, 0, 0));
@@ -96,23 +105,18 @@ namespace CreationModelPlugin
             points.Add(new XYZ(0, width, 0));
             points.Add(new XYZ(0, 0, 0));
 
-            List<Wall> walls = new List<Wall>();
-
             Transaction ts = new Transaction(doc, "Walls Creation Transaction");
-            ts.Start();
-            WallCreate(doc,points,lev1,lev2);
-            ts.Commit();
-            return Result.Succeeded;
-        }
-        public void WallCreate (Document doc,List<XYZ> points, Level lev1, Level lev2)
-        {
+            ts.Start(); 
+            List<Wall> walls = new List<Wall>();
             for (int i = 0; i < points.Count - 1; i++)
             {
                 Line line = Line.CreateBound(points[i], points[i + 1]);
-                Wall wall = Wall.Create(doc, line, lev1.Id, false);
-                //walls.Add(wall);
+                Wall wall = Wall.Create(doc, line, lev1.Id, false);                
                 wall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(lev2.Id);
+                walls.Add(wall);
             }
+            ts.Commit();
+            return walls;
         }
     }    
 }
