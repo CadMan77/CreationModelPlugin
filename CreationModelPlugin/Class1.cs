@@ -109,14 +109,11 @@ namespace CreationModelPlugin
                 .ToList();
 
             Level lev1 = levels
-                //.Where(x => x.Name.Equals("Level 1")) // ?билингво? ~ ||"Уровень 1"
                 .Where(x => x.Name.Equals("Level 1")|| x.Name.Equals("Уровень 1"))
-                //.FirstOrDefault();
                 .SingleOrDefault();
 
             Level lev2 = levels
                 .Where(x => x.Name.Equals("Level 2")|| x.Name.Equals("Уровень 2"))
-                //.FirstOrDefault();
                 .SingleOrDefault();
 
             List<XYZ> points = new List<XYZ>();
@@ -142,8 +139,6 @@ namespace CreationModelPlugin
 
         public FamilyInstance DoorCreate(Document doc, Wall wall, string doorSize)
         {
-            //XYZ doorLP = ((points[0] + points[1]) / 2);
-
             LocationCurve doorLC = wall.Location as LocationCurve;
             Curve doorCurve = doorLC.Curve;
             XYZ doorLP = ((doorCurve.GetEndPoint(0) + doorCurve.GetEndPoint(1)) / 2);
@@ -151,8 +146,6 @@ namespace CreationModelPlugin
             FamilySymbol doorFS = new FilteredElementCollector(doc)
                 .OfCategory(BuiltInCategory.OST_Doors)
                 .OfType<FamilySymbol>()
-                //.FirstOrDefault();
-                //.Where(x => x.Name.Equals(doorName))
                 .Where(x => x.Name.StartsWith(doorSize))
                 .SingleOrDefault();
 
@@ -178,8 +171,6 @@ namespace CreationModelPlugin
 
         public FamilyInstance WindowCreate(Document doc, Wall wall, string winSize, int winLevMM)
         {
-            //XYZ windowLP = ((points[0] + points[1]) / 2);
-
             LocationCurve windowLC = wall.Location as LocationCurve;
             Curve windowCurve = windowLC.Curve;
             XYZ windowLP = ((windowCurve.GetEndPoint(0) + windowCurve.GetEndPoint(1)) / 2);
@@ -187,8 +178,6 @@ namespace CreationModelPlugin
             FamilySymbol windowFS = new FilteredElementCollector(doc)
                 .OfCategory(BuiltInCategory.OST_Windows)
                 .OfType<FamilySymbol>()
-                //.FirstOrDefault();
-                //.Where(x => x.Name.Equals(windowName))
                 .Where(x => x.Name.StartsWith(winSize))
                 .SingleOrDefault();
 
