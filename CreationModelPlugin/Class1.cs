@@ -1,5 +1,6 @@
 ﻿using Autodesk.Revit.Attributes;
 using Autodesk.Revit.DB;
+using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
 using System;
 using System.Collections.Generic;
@@ -77,6 +78,11 @@ namespace CreationModelPlugin
 
             List<Wall> walls = WallCreate(doc, length, width);
 
+            Wall doorWall = walls[1];
+            string doorName = "0864 x 2032mm";
+
+            FamilyInstance door = DoorCreate(doc, doorWall, doorName);
+
             return Result.Succeeded;
         }
 
@@ -89,12 +95,13 @@ namespace CreationModelPlugin
 
             Level lev1 = levels
                 .Where(x => x.Name.Equals("Level 1")) // ?билингво? ~ ||"Уровень 1"
-                .FirstOrDefault();
-            //.First(); //?
+                //.FirstOrDefault();
+                .SingleOrDefault();
 
             Level lev2 = levels
                 .Where(x => x.Name.Equals("Level 2"))
-                .FirstOrDefault(); 
+                //.FirstOrDefault();
+                .SingleOrDefault();
 
             List<XYZ> points = new List<XYZ>();
             points.Add(new XYZ(0, 0, 0));
@@ -115,6 +122,41 @@ namespace CreationModelPlugin
             }
             ts.Commit();
             return walls;
+        }
+
+        public FamilyInstance DoorCreate(Document doc, Wall wall, string doorName)
+        {
+            //XYZ doorLP = ((points[0] + points[1]) / 2);
+
+            LocationCurve doorLC = wall.Location as LocationCurve;
+            Curve doorCurve = doorLC.Curve;
+            XYZ doorLP = ((doorCurve.GetEndPoint(0) + doorCurve.GetEndPoint(1)) / 2);
+
+            FamilySymbol doorFS = new FilteredElementCollector(doc)
+                .OfCategory(BuiltInCategory.OST_Doors)
+                .OfType<FamilySymbol>()
+                //.FirstOrDefault();
+                .Where(x => x.Name.Equals(doorName))
+                .SingleOrDefault();
+
+            Level doorLev = new FilteredElementCollector(doc)
+                .OfClass(typeof(Level))
+                .OfType<Level>()
+                .Where(x => x.Name.Equals(wall.get_Parameter(BuiltInParameter.WALL_BASE_CONSTRAINT)))
+                .SingleOrDefault();
+
+            if (doorFS == null)
+                return null;
+            else
+            {
+                Transaction ts2 = new Transaction(doc, "Door Creation Transaction");
+                ts2.Start();
+                if (doorFS.IsActive == false)
+                    doorFS.Activate();
+                FamilyInstance door = doc.Create.NewFamilyInstance(doorLP, doorFS, wall, doorLev, StructuralType.NonStructural);
+                ts2.Commit();
+                return door;
+            }
         }
     }    
 }
