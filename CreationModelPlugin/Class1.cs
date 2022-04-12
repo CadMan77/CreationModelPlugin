@@ -62,13 +62,13 @@ namespace CreationModelPlugin
                 .OfClass(typeof(FamilyInstance))
                 //.Cast<Wall>() // попытка приведения типа (возможны exception)
                 .OfType<FamilyInstance>()
-                .Where(x=>x.Name.Equals("36\" x 84\""))
+                .Where(x => x.Name.Equals("36\" x 84\""))
                 .ToList(); // 10
             //TaskDialog.Show("res2 QTY:", $"{res2.Count}");
 
             var res3 = new FilteredElementCollector(doc)
                 .WhereElementIsNotElementType() //??
-                .Where(x=>x.Name.Equals("36\" x 84\""))
+                .Where(x => x.Name.Equals("36\" x 84\""))
                 .ToList(); // 11 (д.б.10??)
                            //TaskDialog.Show("res3 QTY:", $"{res3.Count}");
             #endregion
@@ -81,7 +81,7 @@ namespace CreationModelPlugin
             Wall doorWall = walls[0];
 
             string doorType = "M_Single-Flush"; // ?избыточное?
-            
+
             string doorSize = "0864 x 2032"; // общая часть типоразмера двери // EN:"0864 x 2032mm" // RU:"0864 x 2032 мм"
 
             FamilyInstance door = DoorCreate(doc, doorWall, doorSize);
@@ -92,13 +92,18 @@ namespace CreationModelPlugin
             windowWalls.Add(walls[3]);
 
             string windowType = "M_Fixed"; // ?избыточное?
-            
+
             string windowName = "0915 x 1220"; // общая часть типоразмера окна // EN:"0915 x 1220mm" // ..
             int winBaseHeightMM = 1000;
             foreach (var wall in windowWalls)
             {
                 FamilyInstance window = WindowCreate(doc, wall, windowName, winBaseHeightMM);
             }
+
+            //string roofTypeName = "Sloped Glazing";
+            string roofTypeName = "Generic - 125mm";
+
+            FootPrintRoof roof = PrintRoofCreate(doc, walls, roofTypeName);
 
             return Result.Succeeded;
         }
@@ -111,11 +116,11 @@ namespace CreationModelPlugin
                 .ToList();
 
             Level lev1 = levels
-                .Where(x => x.Name.Equals("Level 1")|| x.Name.Equals("Уровень 1"))
+                .Where(x => x.Name.Equals("Level 1") || x.Name.Equals("Уровень 1"))
                 .SingleOrDefault();
 
             Level lev2 = levels
-                .Where(x => x.Name.Equals("Level 2")|| x.Name.Equals("Уровень 2"))
+                .Where(x => x.Name.Equals("Level 2") || x.Name.Equals("Уровень 2"))
                 .SingleOrDefault();
 
             List<XYZ> points = new List<XYZ>();
@@ -126,12 +131,12 @@ namespace CreationModelPlugin
             points.Add(new XYZ(0, 0, 0));
 
             Transaction ts = new Transaction(doc, "Walls Creation Transaction");
-            ts.Start(); 
+            ts.Start();
             List<Wall> walls = new List<Wall>();
             for (int i = 0; i < points.Count - 1; i++)
             {
                 Line line = Line.CreateBound(points[i], points[i + 1]);
-                Wall wall = Wall.Create(doc, line, lev1.Id, false);                
+                Wall wall = Wall.Create(doc, line, lev1.Id, false);
                 wall.get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).Set(lev2.Id);
                 walls.Add(wall);
             }
@@ -202,6 +207,43 @@ namespace CreationModelPlugin
                 ts2.Commit();
                 return window;
             }
+        }
+
+        public FootPrintRoof PrintRoofCreate(Document doc, List<Wall> walls, string roofTypeName)
+        {
+
+            CurveArray footPrint = new CurveArray();
+            foreach (Wall wall in walls)
+            {
+                LocationCurve windowLC = wall.Location as LocationCurve;
+                footPrint.Append(windowLC.Curve);
+            }
+
+            Level roofLev = new FilteredElementCollector(doc)
+                .OfClass(typeof(Level))
+                .OfType<Level>()
+                //.Where(x => x.Name.Equals(walls[0].get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).ToString()))
+                .Where(x => x.Name.Equals(doc.GetElement(walls[0].get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).AsElementId()).Name.ToString()))
+                .SingleOrDefault();
+
+            RoofType roofType = new FilteredElementCollector(doc)
+                .OfClass(typeof(RoofType))
+                .OfType<RoofType>()
+                .Where(x => x.Name.Equals(roofTypeName))
+                .SingleOrDefault();
+
+            ModelCurveArray footPrintToModelCurveMapping = new ModelCurveArray();
+
+            Transaction ts3 = new Transaction(doc, "Roof Create Transaction");
+            ts3.Start();
+            FootPrintRoof roof = doc.Create.NewFootPrintRoof(footPrint, roofLev, roofType, out footPrintToModelCurveMapping);
+            foreach (ModelCurve mc in footPrintToModelCurveMapping)
+            {
+                roof.set_DefinesSlope(mc, true);
+                roof.set_SlopeAngle(mc, 0.5);
+            }
+            ts3.Commit();
+            return roof;
         }
     }    
 }
