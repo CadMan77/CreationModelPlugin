@@ -79,19 +79,25 @@ namespace CreationModelPlugin
             List<Wall> walls = WallCreate(doc, length, width);
 
             Wall doorWall = walls[0];
-            //string doorNameEN = "0864 x 2032mm";
-            //string doorNameRU = "0762 x 2032 мм"
-            string doorName = "0864 x 2032"; // начало типоразмера двери (размеры)
 
-            FamilyInstance door = DoorCreate(doc, doorWall, doorName);
+            string doorFamily = "M_Single-Flush"; // ?избыточное?
+
+            //string doorSizeEN = "0864 x 2032mm";
+            //string doorSizeRU = "0864 x 2032 мм";
+            
+            string doorSize = "0864 x 2032"; // общая часть типоразмера двери
+
+            FamilyInstance door = DoorCreate(doc, doorWall, doorSize);
 
             List<Wall> windowWalls = new List<Wall>();
             windowWalls.Add(walls[1]);
             windowWalls.Add(walls[2]);
             windowWalls.Add(walls[3]);
 
+            string winFamily = "M_Fixed"; // ?избыточное?
+
             //string winNameEN = "0915 x 1220mm";
-            string windowName = "0915 x 1220"; // начало типоразмера окна (размеры)
+            string windowName = "0915 x 1220"; // общая часть типоразмера окна
             int winBaseHeightMM = 1000;
             foreach (var wall in windowWalls)
             {
@@ -147,6 +153,7 @@ namespace CreationModelPlugin
                 .OfCategory(BuiltInCategory.OST_Doors)
                 .OfType<FamilySymbol>()
                 .Where(x => x.Name.StartsWith(doorSize))
+                //.Where(x => x.Family.Name.Equals(doorFamily)) // ?избыточное?
                 .SingleOrDefault();
 
             Level doorLev = new FilteredElementCollector(doc)
@@ -179,6 +186,7 @@ namespace CreationModelPlugin
                 .OfCategory(BuiltInCategory.OST_Windows)
                 .OfType<FamilySymbol>()
                 .Where(x => x.Name.StartsWith(winSize))
+                //.Where(x => x.Family.Name.Equals(winFamily)) // ?избыточное?
                 .SingleOrDefault();
 
             Level windowLev = new FilteredElementCollector(doc)
