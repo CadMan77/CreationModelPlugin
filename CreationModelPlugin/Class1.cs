@@ -81,11 +81,8 @@ namespace CreationModelPlugin
             Wall doorWall = walls[0];
 
             string doorType = "M_Single-Flush"; // ?избыточное?
-
-            //string doorSizeEN = "0864 x 2032mm";
-            //string doorSizeRU = "0864 x 2032 мм";
             
-            string doorSize = "0864 x 2032"; // общая часть типоразмера двери
+            string doorSize = "0864 x 2032"; // общая часть типоразмера двери // EN:"0864 x 2032mm" // RU:"0864 x 2032 мм"
 
             FamilyInstance door = DoorCreate(doc, doorWall, doorSize);
 
@@ -95,9 +92,8 @@ namespace CreationModelPlugin
             windowWalls.Add(walls[3]);
 
             string windowType = "M_Fixed"; // ?избыточное?
-
-            //string winNameEN = "0915 x 1220mm";
-            string windowName = "0915 x 1220"; // общая часть типоразмера окна
+            
+            string windowName = "0915 x 1220"; // общая часть типоразмера окна // EN:"0915 x 1220mm" // ..
             int winBaseHeightMM = 1000;
             foreach (var wall in windowWalls)
             {
@@ -167,7 +163,7 @@ namespace CreationModelPlugin
             {
                 Transaction ts2 = new Transaction(doc, "Door Creation Transaction");
                 ts2.Start();
-                if (doorFS.IsActive == false)
+                if (!doorFS.IsActive)
                     doorFS.Activate();
                 FamilyInstance door = doc.Create.NewFamilyInstance(doorLP, doorFS, wall, doorLev, StructuralType.NonStructural);
                 ts2.Commit();
@@ -199,7 +195,7 @@ namespace CreationModelPlugin
             {
                 Transaction ts2 = new Transaction(doc, "Windows Creation Transaction");
                 ts2.Start();
-                if (windowFS.IsActive == false)
+                if (!windowFS.IsActive)
                     windowFS.Activate();
                 FamilyInstance window = doc.Create.NewFamilyInstance(windowLP, windowFS, wall, windowLev, StructuralType.NonStructural);
                 window.get_Parameter(BuiltInParameter.INSTANCE_SILL_HEIGHT_PARAM).Set(UnitUtils.ConvertToInternalUnits(winLevMM, UnitTypeId.Millimeters));
