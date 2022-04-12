@@ -81,9 +81,22 @@ namespace CreationModelPlugin
             Wall doorWall = walls[0];
             //string doorNameEN = "0864 x 2032mm";
             //string doorNameRU = "0762 x 2032 мм"
-            string doorName = "0864 x 2032"; // начало типоразмера (размеры)
+            string doorName = "0864 x 2032"; // начало типоразмера двери (размеры)
 
             FamilyInstance door = DoorCreate(doc, doorWall, doorName);
+
+            List<Wall> windowWalls = new List<Wall>();
+            windowWalls.Add(walls[1]);
+            windowWalls.Add(walls[2]);
+            windowWalls.Add(walls[3]);
+
+            //string winNameEN = "0915 x 1220mm";
+            string windowName = "0915 x 1220"; // начало типоразмера окна (размеры)
+            int winBaseHeightMM = 1000;
+            foreach (var wall in windowWalls)
+            {
+                FamilyInstance window = WindowCreate(doc, wall, windowName, winBaseHeightMM);
+            }
 
             return Result.Succeeded;
         }
@@ -127,7 +140,7 @@ namespace CreationModelPlugin
             return walls;
         }
 
-        public FamilyInstance DoorCreate(Document doc, Wall wall, string doorName)
+        public FamilyInstance DoorCreate(Document doc, Wall wall, string doorSize)
         {
             //XYZ doorLP = ((points[0] + points[1]) / 2);
 
@@ -140,7 +153,7 @@ namespace CreationModelPlugin
                 .OfType<FamilySymbol>()
                 //.FirstOrDefault();
                 //.Where(x => x.Name.Equals(doorName))
-                .Where(x => x.Name.StartsWith(doorName))
+                .Where(x => x.Name.StartsWith(doorSize))
                 .SingleOrDefault();
 
             Level doorLev = new FilteredElementCollector(doc)
@@ -160,6 +173,43 @@ namespace CreationModelPlugin
                 FamilyInstance door = doc.Create.NewFamilyInstance(doorLP, doorFS, wall, doorLev, StructuralType.NonStructural);
                 ts2.Commit();
                 return door;
+            }
+        }
+
+        public FamilyInstance WindowCreate(Document doc, Wall wall, string winSize, int winLevMM)
+        {
+            //XYZ windowLP = ((points[0] + points[1]) / 2);
+
+            LocationCurve windowLC = wall.Location as LocationCurve;
+            Curve windowCurve = windowLC.Curve;
+            XYZ windowLP = ((windowCurve.GetEndPoint(0) + windowCurve.GetEndPoint(1)) / 2);
+
+            FamilySymbol windowFS = new FilteredElementCollector(doc)
+                .OfCategory(BuiltInCategory.OST_Windows)
+                .OfType<FamilySymbol>()
+                //.FirstOrDefault();
+                //.Where(x => x.Name.Equals(windowName))
+                .Where(x => x.Name.StartsWith(winSize))
+                .SingleOrDefault();
+
+            Level windowLev = new FilteredElementCollector(doc)
+                .OfClass(typeof(Level))
+                .OfType<Level>()
+                .Where(x => x.Name.Equals(wall.get_Parameter(BuiltInParameter.WALL_BASE_CONSTRAINT)))
+                .SingleOrDefault();
+
+            if (windowFS == null)
+                return null;
+            else
+            {
+                Transaction ts2 = new Transaction(doc, "Windows Creation Transaction");
+                ts2.Start();
+                if (windowFS.IsActive == false)
+                    windowFS.Activate();
+                FamilyInstance window = doc.Create.NewFamilyInstance(windowLP, windowFS, wall, windowLev, StructuralType.NonStructural);
+                window.get_Parameter(BuiltInParameter.INSTANCE_SILL_HEIGHT_PARAM).Set(UnitUtils.ConvertToInternalUnits(winLevMM, UnitTypeId.Millimeters));
+                ts2.Commit();
+                return window;
             }
         }
     }    
