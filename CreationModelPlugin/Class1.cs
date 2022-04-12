@@ -80,7 +80,7 @@ namespace CreationModelPlugin
 
             Wall doorWall = walls[0];
 
-            string doorFamily = "M_Single-Flush"; // ?избыточное?
+            string doorType = "M_Single-Flush"; // ?избыточное?
 
             //string doorSizeEN = "0864 x 2032mm";
             //string doorSizeRU = "0864 x 2032 мм";
@@ -94,7 +94,7 @@ namespace CreationModelPlugin
             windowWalls.Add(walls[2]);
             windowWalls.Add(walls[3]);
 
-            string winFamily = "M_Fixed"; // ?избыточное?
+            string windowType = "M_Fixed"; // ?избыточное?
 
             //string winNameEN = "0915 x 1220mm";
             string windowName = "0915 x 1220"; // общая часть типоразмера окна
@@ -146,14 +146,13 @@ namespace CreationModelPlugin
         public FamilyInstance DoorCreate(Document doc, Wall wall, string doorSize)
         {
             LocationCurve doorLC = wall.Location as LocationCurve;
-            Curve doorCurve = doorLC.Curve;
-            XYZ doorLP = ((doorCurve.GetEndPoint(0) + doorCurve.GetEndPoint(1)) / 2);
+            XYZ doorLP = ((doorLC.Curve.GetEndPoint(0) + doorLC.Curve.GetEndPoint(1)) / 2);
 
             FamilySymbol doorFS = new FilteredElementCollector(doc)
                 .OfCategory(BuiltInCategory.OST_Doors)
                 .OfType<FamilySymbol>()
                 .Where(x => x.Name.StartsWith(doorSize))
-                //.Where(x => x.Family.Name.Equals(doorFamily)) // ?избыточное?
+                //.Where(x => x.Family.Name.Equals(doorType)) // ?избыточное?
                 .SingleOrDefault();
 
             Level doorLev = new FilteredElementCollector(doc)
@@ -179,14 +178,13 @@ namespace CreationModelPlugin
         public FamilyInstance WindowCreate(Document doc, Wall wall, string winSize, int winLevMM)
         {
             LocationCurve windowLC = wall.Location as LocationCurve;
-            Curve windowCurve = windowLC.Curve;
-            XYZ windowLP = ((windowCurve.GetEndPoint(0) + windowCurve.GetEndPoint(1)) / 2);
+            XYZ windowLP = ((windowLC.Curve.GetEndPoint(0) + windowLC.Curve.GetEndPoint(1)) / 2);
 
             FamilySymbol windowFS = new FilteredElementCollector(doc)
                 .OfCategory(BuiltInCategory.OST_Windows)
                 .OfType<FamilySymbol>()
                 .Where(x => x.Name.StartsWith(winSize))
-                //.Where(x => x.Family.Name.Equals(winFamily)) // ?избыточное?
+                //.Where(x => x.Family.Name.Equals(windowType)) // ?избыточное?
                 .SingleOrDefault();
 
             Level windowLev = new FilteredElementCollector(doc)
