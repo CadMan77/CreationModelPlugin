@@ -78,8 +78,10 @@ namespace CreationModelPlugin
 
             List<Wall> walls = WallCreate(doc, length, width);
 
-            Wall doorWall = walls[1];
-            string doorName = "0864 x 2032mm";
+            Wall doorWall = walls[0];
+            //string doorNameEN = "0864 x 2032mm";
+            //string doorNameRU = "0762 x 2032 мм"
+            string doorName = "0864 x 2032"; // начало типоразмера (размеры)
 
             FamilyInstance door = DoorCreate(doc, doorWall, doorName);
 
@@ -94,12 +96,13 @@ namespace CreationModelPlugin
                 .ToList();
 
             Level lev1 = levels
-                .Where(x => x.Name.Equals("Level 1")) // ?билингво? ~ ||"Уровень 1"
+                //.Where(x => x.Name.Equals("Level 1")) // ?билингво? ~ ||"Уровень 1"
+                .Where(x => x.Name.Equals("Level 1")|| x.Name.Equals("Уровень 1"))
                 //.FirstOrDefault();
                 .SingleOrDefault();
 
             Level lev2 = levels
-                .Where(x => x.Name.Equals("Level 2"))
+                .Where(x => x.Name.Equals("Level 2")|| x.Name.Equals("Уровень 2"))
                 //.FirstOrDefault();
                 .SingleOrDefault();
 
@@ -136,7 +139,8 @@ namespace CreationModelPlugin
                 .OfCategory(BuiltInCategory.OST_Doors)
                 .OfType<FamilySymbol>()
                 //.FirstOrDefault();
-                .Where(x => x.Name.Equals(doorName))
+                //.Where(x => x.Name.Equals(doorName))
+                .Where(x => x.Name.StartsWith(doorName))
                 .SingleOrDefault();
 
             Level doorLev = new FilteredElementCollector(doc)
