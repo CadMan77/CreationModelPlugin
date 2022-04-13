@@ -77,8 +77,6 @@ namespace CreationModelPlugin
                            //TaskDialog.Show("res3 QTY:", $"{res3.Count}");
             #endregion
 
-
-
             List<Wall> walls = WallCreate(doc, length, width);
 
             Wall doorWall = walls[0];
@@ -242,12 +240,18 @@ namespace CreationModelPlugin
                 i += 1;
             }
 
+            //Level roofLev = new FilteredElementCollector(doc)
+            //    .OfClass(typeof(Level))
+            //    .OfType<Level>()
+            //    .Where(x => x.Name.Equals(doc.GetElement(walls[0].get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).AsElementId()).Name.ToString()))
+            //    .SingleOrDefault();
+
             Level roofLev = new FilteredElementCollector(doc)
                 .OfClass(typeof(Level))
                 .OfType<Level>()
-                //.Where(x => x.Name.Equals(walls[0].get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).ToString()))
-                .Where(x => x.Name.Equals(doc.GetElement(walls[0].get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).AsElementId()).Name.ToString()))
-                .SingleOrDefault();
+                .OrderBy(x => x.Elevation)
+                .LastOrDefault();
+            //TaskDialog.Show("roofLev", roofLev.Name);
 
             RoofType roofType = new FilteredElementCollector(doc)
                 .OfClass(typeof(RoofType))
@@ -278,11 +282,19 @@ namespace CreationModelPlugin
             curveArray.Append(Line.CreateBound(new XYZ(0, width/2, overalHight), new XYZ(0, width + roofSag, overalHight-6)));
             #endregion
 
+            //Level roofLev = new FilteredElementCollector(doc)
+            //    .OfClass(typeof(Level))
+            //    .OfType<Level>()
+            //    .Where(x => x.Name.Equals(doc.GetElement(walls[0].get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).AsElementId()).Name.ToString()))
+            //    .SingleOrDefault();
+
             Level roofLev = new FilteredElementCollector(doc)
                 .OfClass(typeof(Level))
                 .OfType<Level>()
-                .Where(x => x.Name.Equals(doc.GetElement(walls[0].get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).AsElementId()).Name.ToString())) // переделать на определение по критерию наибольшей отметки
-                .SingleOrDefault();
+                //.OrderBy(x => x.Elevation) 
+                //.LastOrDefault();
+                .FirstOrDefault();
+            //TaskDialog.Show("roofLev", roofLev.Name);
 
             RoofType roofType = new FilteredElementCollector(doc)
                 .OfClass(typeof(RoofType))
@@ -297,7 +309,7 @@ namespace CreationModelPlugin
 
             //ReferencePlane plane = doc.Create.NewReferencePlane(new XYZ(0, 0, 0), new XYZ(0, 0, 20), new XYZ(0, 20, 0), doc.ActiveView); // Origin YZ plane
 
-            ReferencePlane plane = doc.Create.NewReferencePlane(new XYZ(-roofSag, 0, 0), new XYZ(-roofSag, 0, 20), new XYZ(0, 20, 0), doc.ActiveView); // Plane parallel to Origin YZ plane (offset = roofSag)
+            ReferencePlane roofSketchPlane = doc.Create.NewReferencePlane(new XYZ(-roofSag, 0, 0), new XYZ(-roofSag, 0, 20), new XYZ(0, 20, 0), doc.ActiveView); // Plane parallel to Origin YZ plane (offset = roofSag)
 
             if (roofLev == null || roofType == null)
             {
@@ -305,7 +317,7 @@ namespace CreationModelPlugin
                 return null;
             }
 
-            ExtrusionRoof roof = doc.Create.NewExtrusionRoof(curveArray, plane, roofLev, roofType, 0, length + 2*roofSag);
+            ExtrusionRoof roof = doc.Create.NewExtrusionRoof(curveArray, roofSketchPlane, roofLev, roofType, 0, length + 2*roofSag);
 
             // по состоянию на 2021-11 присоединить программно стены к наклонной крыше ?невозможно? (https://forums.autodesk.com/t5/revit-api-forum/wall-attach-top-base-no-api/m-p/5992539)
 
