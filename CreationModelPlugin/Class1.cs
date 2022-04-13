@@ -15,6 +15,7 @@ namespace CreationModelPlugin
     {
         int length = 30;
         int width = 18;
+        int roofSag = 2; // размер свеса кровли
 
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
@@ -253,11 +254,10 @@ namespace CreationModelPlugin
         public ExtrusionRoof ExtrusionRoofCreate(Document doc, List<Wall> walls, string roofTypeName)
         {
             #region Профиль образующей крыши
-            int roofsag = 2; // размер свеса кровли
-            int overalHight = 20; // высота дома в коньке
+            int overalHight = 19; // высота дома в коньке
             CurveArray curveArray = new CurveArray();
-            curveArray.Append(Line.CreateBound(new XYZ(0, 0 - roofsag, overalHight-6), new XYZ(0, width/2, overalHight)));
-            curveArray.Append(Line.CreateBound(new XYZ(0, width/2, overalHight), new XYZ(0, width + roofsag, overalHight-6)));
+            curveArray.Append(Line.CreateBound(new XYZ(0, 0 - roofSag, overalHight-6), new XYZ(0, width/2, overalHight)));
+            curveArray.Append(Line.CreateBound(new XYZ(0, width/2, overalHight), new XYZ(0, width + roofSag, overalHight-6)));
             #endregion
 
             Level roofLev = new FilteredElementCollector(doc)
@@ -277,7 +277,9 @@ namespace CreationModelPlugin
             Transaction ts4 = new Transaction(doc, "Extrusion Roof Create Transaction");
             ts4.Start();
 
-            ReferencePlane plane = doc.Create.NewReferencePlane(new XYZ(0, 0, 0), new XYZ(0, 0, 20), new XYZ(0, 20, 0), doc.ActiveView); // Origin YZ plane
+            //ReferencePlane plane = doc.Create.NewReferencePlane(new XYZ(0, 0, 0), new XYZ(0, 0, 20), new XYZ(0, 20, 0), doc.ActiveView); // Origin YZ plane
+
+            ReferencePlane plane = doc.Create.NewReferencePlane(new XYZ(-roofSag, 0, 0), new XYZ(-roofSag, 0, 20), new XYZ(0, 20, 0), doc.ActiveView); // Plane parallel to Origin YZ plane (offset = roofSag)
 
             if (roofLev == null || roofType == null)
             {
@@ -285,7 +287,7 @@ namespace CreationModelPlugin
                 return null;
             }
 
-            ExtrusionRoof roof = doc.Create.NewExtrusionRoof(curveArray, plane, roofLev, roofType, 0, length); // обеспечить свесы в направлении выдавливания
+            ExtrusionRoof roof = doc.Create.NewExtrusionRoof(curveArray, plane, roofLev, roofType, 0, length + 2*roofSag);
 
             // по состоянию на 2021-11 присоединить программно стены к наклонной крыше ?невозможно? (https://forums.autodesk.com/t5/revit-api-forum/wall-attach-top-base-no-api/m-p/5992539)
 
