@@ -287,7 +287,7 @@ namespace CreationModelPlugin
 
             ExtrusionRoof roof = doc.Create.NewExtrusionRoof(curveArray, plane, roofLev, roofType, 0, length); // обеспечить свесы в направлении выдавливания
 
-            // присоединить к крыше стены
+            // по состоянию на 2021-11 присоединить программно стены к наклонной крыше ?невозможно? (https://forums.autodesk.com/t5/revit-api-forum/wall-attach-top-base-no-api/m-p/5992539)
 
             ts4.Commit();
             return roof;
