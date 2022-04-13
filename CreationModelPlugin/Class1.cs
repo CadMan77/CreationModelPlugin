@@ -218,10 +218,28 @@ namespace CreationModelPlugin
         {
 
             CurveArray footPrint = new CurveArray();
+            //foreach (Wall wall in walls)
+            //{
+            //    LocationCurve windowLC = wall.Location as LocationCurve;
+            //    footPrint.Append(windowLC.Curve);
+            //}
+
+            List<XYZ> points = new List<XYZ>();
+            points.Add(new XYZ(-roofSag, -roofSag, 0));
+            points.Add(new XYZ(roofSag, -roofSag, 0));
+            points.Add(new XYZ(roofSag, roofSag, 0));
+            points.Add(new XYZ(-roofSag, roofSag, 0));
+            points.Add(new XYZ(-roofSag, -roofSag, 0));
+
+            int i = 0;
             foreach (Wall wall in walls)
             {
                 LocationCurve windowLC = wall.Location as LocationCurve;
-                footPrint.Append(windowLC.Curve);
+                XYZ p1 = windowLC.Curve.GetEndPoint(0);
+                XYZ p2 = windowLC.Curve.GetEndPoint(1);
+                Line line = Line.CreateBound(p1 + points[i], p2 + points[i + 1]);
+                footPrint.Append(line);
+                i += 1;
             }
 
             Level roofLev = new FilteredElementCollector(doc)
