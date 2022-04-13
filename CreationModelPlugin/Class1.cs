@@ -13,6 +13,9 @@ namespace CreationModelPlugin
     [TransactionAttribute(TransactionMode.Manual)]
     public class CreationModelPlugin : IExternalCommand
     {
+        int length = 30;
+        int width = 18;
+
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
             Document doc = commandData.Application.ActiveUIDocument.Document;
@@ -73,8 +76,7 @@ namespace CreationModelPlugin
                            //TaskDialog.Show("res3 QTY:", $"{res3.Count}");
             #endregion
 
-            int length = 30;
-            int width = 18;
+
 
             List<Wall> walls = WallCreate(doc, length, width);
 
@@ -103,7 +105,9 @@ namespace CreationModelPlugin
             //string roofTypeName = "Sloped Glazing";
             string roofTypeName = "Generic - 125mm";
 
-            FootPrintRoof roof = PrintRoofCreate(doc, walls, roofTypeName);
+            //FootPrintRoof roof = PrintRoofCreate(doc, walls, roofTypeName);
+
+            ExtrusionRoof roof = ExtrusionRoofCreate(doc, walls, roofTypeName);
 
             return Result.Succeeded;
         }
@@ -234,7 +238,7 @@ namespace CreationModelPlugin
 
             ModelCurveArray footPrintToModelCurveMapping = new ModelCurveArray();
 
-            Transaction ts3 = new Transaction(doc, "Roof Create Transaction");
+            Transaction ts3 = new Transaction(doc, "FootPrint Roof Create Transaction");
             ts3.Start();
             FootPrintRoof roof = doc.Create.NewFootPrintRoof(footPrint, roofLev, roofType, out footPrintToModelCurveMapping);
             foreach (ModelCurve mc in footPrintToModelCurveMapping)
@@ -243,6 +247,47 @@ namespace CreationModelPlugin
                 roof.set_SlopeAngle(mc, 0.5);
             }
             ts3.Commit();
+            return roof;
+        }
+
+        public ExtrusionRoof ExtrusionRoofCreate(Document doc, List<Wall> walls, string roofTypeName)
+        {
+            #region Профиль образующей крыши
+            int roofsag = 2; // размер свеса кровли
+            int overalHight = 20; // высота дома в коньке
+            CurveArray curveArray = new CurveArray();
+            curveArray.Append(Line.CreateBound(new XYZ(0, 0 - roofsag, overalHight-6), new XYZ(0, width/2, overalHight)));
+            curveArray.Append(Line.CreateBound(new XYZ(0, width/2, overalHight), new XYZ(0, width + roofsag, overalHight-6)));
+            #endregion
+
+            Level roofLev = new FilteredElementCollector(doc)
+                .OfClass(typeof(Level))
+                .OfType<Level>()
+                .Where(x => x.Name.Equals(doc.GetElement(walls[0].get_Parameter(BuiltInParameter.WALL_HEIGHT_TYPE).AsElementId()).Name.ToString())) // переделать на определение по критерию наибольшей отметки
+                .SingleOrDefault();
+
+            RoofType roofType = new FilteredElementCollector(doc)
+                .OfClass(typeof(RoofType))
+                .OfType<RoofType>()
+                .Where(x => x.Name.Equals(roofTypeName))
+                .SingleOrDefault();
+
+            ModelCurveArray curveArrayToModelCurveMapping = new ModelCurveArray();
+
+            Transaction ts4 = new Transaction(doc, "Extrusion Roof Create Transaction");
+            ts4.Start();
+
+            ReferencePlane plane = doc.Create.NewReferencePlane(new XYZ(0, 0, 0), new XYZ(0, 0, 20), new XYZ(0, 20, 0), doc.ActiveView); // Origin YZ plane
+
+            if (roofLev == null || roofType == null)
+            {
+                TaskDialog.Show("Ошибка", "Не удалось определить конфигурацию крыши.");
+                return null;
+            }
+
+            ExtrusionRoof roof = doc.Create.NewExtrusionRoof(curveArray, plane, roofLev, roofType, 0, length);
+
+            ts4.Commit();
             return roof;
         }
     }    
