@@ -285,7 +285,9 @@ namespace CreationModelPlugin
                 return null;
             }
 
-            ExtrusionRoof roof = doc.Create.NewExtrusionRoof(curveArray, plane, roofLev, roofType, 0, length);
+            ExtrusionRoof roof = doc.Create.NewExtrusionRoof(curveArray, plane, roofLev, roofType, 0, length); // обеспечить свесы в направлении выдавливания
+
+            // присоединить к крыше стены
 
             ts4.Commit();
             return roof;
